@@ -22,7 +22,6 @@ To run the pipeline for training and evaluation, simply use `python train_classi
 For simplicity, the hyperparameters for both the reduced TabNet and TabNet model are kept the same. These can be found in `config/covertype.py`. To set training to reduced TabNet,
 set `REDUCED = True`, else set `REDUCED = False`.
 
-
 ## Modifications for Other Datasets
 
 To modify the experiment to other tabular datasets:
@@ -30,4 +29,5 @@ To modify the experiment to other tabular datasets:
 - Create a new config in `config/` by copying `config/covertype.py` for the numerical and categorical features of the new dataset and hyperparameters,
 - Reoptimize the TabNet hyperparameters for the new dataset in your config,
 - Import the parameters in `train_classifier.py`,
-- Select the reduced TabNet architecture by setting `REDUCED = True`.
+- Select the reduced TabNet architecture by setting `REDUCED = True`, and
+- Change `MODEL_NAME` in your config to a name you desire.
