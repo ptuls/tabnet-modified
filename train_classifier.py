@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Train the TabNet or TabNet Reduced model on various datasets."""
+"""Train the TabNet or reduced TabNet model on various datasets."""
 import os
 from absl import app
 import numpy as np
@@ -38,7 +38,7 @@ def main(unused_argv):
         INT_COLUMNS, BOOL_COLUMNS, FLOAT_COLUMNS, STR_COLUMNS)
 
     # Define the TabNet model
-    tabnet_poker = (
+    tabnet_model = (
         (
             tabnet_reduced.TabNetReduced(
                 columns=input_columns,
@@ -85,11 +85,11 @@ def main(unused_argv):
     feature_test_batch, label_test_batch = test_iter.get_next()
 
     # Define the model and losses
-    encoded_train_batch, total_entropy = tabnet_poker.encoder(
+    encoded_train_batch, total_entropy = tabnet_model.encoder(
         feature_train_batch, reuse=False, is_training=True
     )
 
-    logits_orig_batch, _ = tabnet_poker.classify(
+    logits_orig_batch, _ = tabnet_model.classify(
         encoded_train_batch, reuse=False)
 
     softmax_orig_key_op = tf.reduce_mean(
@@ -118,10 +118,10 @@ def main(unused_argv):
 
     # Model evaluation
     # Test performance
-    encoded_test_batch, _ = tabnet_poker.encoder(
+    encoded_test_batch, _ = tabnet_model.encoder(
         feature_test_batch, reuse=True, is_training=False)
 
-    _, prediction_test = tabnet_poker.classify(encoded_test_batch, reuse=True)
+    _, prediction_test = tabnet_model.classify(encoded_test_batch, reuse=True)
 
     predicted_labels = tf.cast(tf.argmax(prediction_test, 1), dtype=tf.int32)
     test_eq_op = tf.equal(predicted_labels, label_test_batch)
