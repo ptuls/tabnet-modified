@@ -3,7 +3,7 @@
 import os
 from absl import app
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 from datetime import datetime
 from config.covertype import *

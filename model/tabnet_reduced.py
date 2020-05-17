@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Modified reduced TabNet model."""
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 from ..activation.entmax import entmax15
 from ..activation.glu import glu
