@@ -35,7 +35,7 @@ def main(unused_argv):
     np.random.seed(SEED)
 
     input_columns = data_helper.get_columns(
-        INT_COLUMNS, BOOL_COLUMNS, FLOAT_COLUMNS, STR_COLUMNS)
+        INT_COLUMNS, ENCODED_CATEGORICAL_COLUMNS, BOOL_COLUMNS, FLOAT_COLUMNS, STR_COLUMNS)
 
     # Define the TabNet model
     tabnet_model = (
