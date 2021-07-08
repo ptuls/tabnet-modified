@@ -19,15 +19,16 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def sort_col_names(feature_cols):
     column_names = sorted(feature_cols)
-    logger.info(
-        "Ordered column names, corresponding to the indexing in Tensorboard visualization")
+    logger.info("Ordered column names, corresponding to the indexing in Tensorboard visualization")
     for fi in range(len(column_names)):
         logger.info(str(fi) + " : " + column_names[fi])
 
 
 def main(unused_argv):
     # column order
-    feature_columns = INT_COLUMNS + ENCODED_CATEGORICAL_COLUMNS + BOOL_COLUMNS + STR_COLUMNS + FLOAT_COLUMNS
+    feature_columns = (
+        INT_COLUMNS + ENCODED_CATEGORICAL_COLUMNS + BOOL_COLUMNS + STR_COLUMNS + FLOAT_COLUMNS
+    )
     all_columns = feature_columns + [LABEL_COLUMN]
 
     # Fix random seeds
@@ -35,7 +36,8 @@ def main(unused_argv):
     np.random.seed(SEED)
 
     input_columns = data_helper.get_columns(
-        INT_COLUMNS, BOOL_COLUMNS, FLOAT_COLUMNS, STR_COLUMNS)
+        INT_COLUMNS, ENCODED_CATEGORICAL_COLUMNS, BOOL_COLUMNS, FLOAT_COLUMNS, STR_COLUMNS
+    )
 
     # Define the TabNet model
     tabnet_model = (
@@ -72,10 +74,26 @@ def main(unused_argv):
 
     # Input sampling
     train_batch = data_helper.input_fn(
-        TRAIN_FILE, num_epochs=MAX_STEPS, shuffle=True, batch_size=BATCH_SIZE
+        TRAIN_FILE,
+        INT_COLUMNS,
+        BOOL_COLUMNS,
+        FLOAT_COLUMNS,
+        STR_COLUMNS,
+        LABEL_COLUMN,
+        num_epochs=MAX_STEPS,
+        shuffle=True,
+        batch_size=BATCH_SIZE,
     )
     test_batch = data_helper.input_fn(
-        TEST_FILE, num_epochs=MAX_STEPS, shuffle=False, batch_size=data_helper.N_TEST_SAMPLES
+        TEST_FILE,
+        INT_COLUMNS,
+        BOOL_COLUMNS,
+        FLOAT_COLUMNS,
+        STR_COLUMNS,
+        LABEL_COLUMN,
+        num_epochs=MAX_STEPS,
+        shuffle=False,
+        batch_size=N_TEST_SAMPLES,
     )
 
     train_iter = train_batch.make_initializable_iterator()
@@ -89,8 +107,7 @@ def main(unused_argv):
         feature_train_batch, reuse=False, is_training=True
     )
 
-    logits_orig_batch, _ = tabnet_model.classify(
-        encoded_train_batch, reuse=False)
+    logits_orig_batch, _ = tabnet_model.classify(encoded_train_batch, reuse=False)
 
     softmax_orig_key_op = tf.reduce_mean(
         tf.nn.sparse_softmax_cross_entropy_with_logits(
@@ -113,13 +130,11 @@ def main(unused_argv):
         capped_gvs = [
             (tf.clip_by_value(grad, -GRADIENT_THRESH, GRADIENT_THRESH), var) for grad, var in gvs
         ]
-        train_op = optimizer.apply_gradients(
-            capped_gvs, global_step=global_step)
+        train_op = optimizer.apply_gradients(capped_gvs, global_step=global_step)
 
     # Model evaluation
     # Test performance
-    encoded_test_batch, _ = tabnet_model.encoder(
-        feature_test_batch, reuse=True, is_training=False)
+    encoded_test_batch, _ = tabnet_model.encoder(feature_test_batch, reuse=True, is_training=False)
 
     _, prediction_test = tabnet_model.classify(encoded_test_batch, reuse=True)
 
@@ -138,8 +153,7 @@ def main(unused_argv):
     summaries = tf.summary.merge_all()
 
     with tf.Session() as sess:
-        summary_writer = tf.summary.FileWriter(
-            "./tflog/" + model_name, sess.graph)
+        summary_writer = tf.summary.FileWriter("./tflog/" + model_name, sess.graph)
 
         sess.run(init)
         sess.run(init_local)
@@ -149,11 +163,11 @@ def main(unused_argv):
 
         for step in range(1, MAX_STEPS + 1):
             if step % DISPLAY_STEP == 0:
-                _, train_loss, merged_summary = sess.run(
-                    [train_op, train_loss_op, summaries])
+                _, train_loss, merged_summary = sess.run([train_op, train_loss_op, summaries])
                 summary_writer.add_summary(merged_summary, step)
-                logger.info("Step " + str(step) + ", Training Loss = " +
-                      "{:.4f}".format(train_loss))
+                logger.info(
+                    "Step " + str(step) + ", Training Loss = " + "{:.4f}".format(train_loss)
+                )
             else:
                 _ = sess.run(train_op)
 
@@ -164,8 +178,7 @@ def main(unused_argv):
                 merged_summary = test_arr[0]
                 test_acc = test_arr[1]
 
-                logger.info("Step " + str(step) + ", Test Accuracy = " +
-                      "{:.4f}".format(test_acc))
+                logger.info("Step " + str(step) + ", Test Accuracy = " + "{:.4f}".format(test_acc))
                 summary_writer.add_summary(merged_summary, step)
 
             if step % SAVE_STEP == 0:

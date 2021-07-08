@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import functools
 import tensorflow as tf
 from tensorflow.python.framework import dtypes
 
@@ -52,10 +53,10 @@ def get_columns(int_columns, encoded_categorical_columns, bool_columns, float_co
     return columns
 
 
-def parse_csv(value_column, int_columns, bool_columns, float_columns, str_columns, label_column):
+def parse_csv(int_columns, bool_columns, float_columns, str_columns, label_column, value_column):
     """Parses a CSV file based on the provided column types."""
     defaults = set_defaults(int_columns, bool_columns, float_columns, str_columns)
-    all_columns = int_columns + bool_columns + float_columns + str_columns
+    all_columns = int_columns + bool_columns + float_columns + str_columns + [label_column]
     columns = tf.decode_csv(value_column, record_defaults=defaults)
     features = dict(zip(all_columns, columns))
     label = features.pop(label_column)
@@ -63,7 +64,19 @@ def parse_csv(value_column, int_columns, bool_columns, float_columns, str_column
     return features, classes
 
 
-def input_fn(data_file, num_epochs, shuffle, batch_size, n_buffer=50, n_parallel=16):
+def input_fn(
+    data_file,
+    int_columns,
+    bool_columns,
+    float_columns,
+    str_columns,
+    label_column,
+    num_epochs,
+    shuffle,
+    batch_size,
+    n_buffer=50,
+    n_parallel=16,
+):
     """Function to read the input file and return the dataset.
 
     Args:
@@ -84,8 +97,17 @@ def input_fn(data_file, num_epochs, shuffle, batch_size, n_buffer=50, n_parallel
     if shuffle:
         dataset = dataset.shuffle(buffer_size=n_buffer)
 
+    parse_csv_partial = functools.partial(
+        parse_csv,
+        int_columns,
+        bool_columns,
+        float_columns,
+        str_columns,
+        label_column,
+    )
+
     dataset = dataset.batch(batch_size, drop_remainder=True)
-    dataset = dataset.map(parse_csv, num_parallel_calls=n_parallel)
+    dataset = dataset.map(parse_csv_partial, num_parallel_calls=n_parallel)
 
     # Repeat after shuffling, to prevent separate epochs from blending together.
     dataset = dataset.repeat(num_epochs)

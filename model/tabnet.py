@@ -16,8 +16,11 @@
 """TabNet model."""
 import numpy as np
 import tensorflow.compat.v1 as tf
+import sys
 
-from ..activation.glu import glu
+sys.path.append("..")
+
+from activation.glu import glu
 
 
 class TabNet(object):

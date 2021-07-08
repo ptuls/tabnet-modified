@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 """Modified reduced TabNet model."""
 import numpy as np
+import sys
+
+sys.path.append("..")
+
 import tensorflow.compat.v1 as tf
 
-from ..activation.entmax import entmax15
-from ..activation.glu import glu
+from activation.entmax import entmax15
+from activation.glu import glu
 
 
 class TabNetReduced(object):
